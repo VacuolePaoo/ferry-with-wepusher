@@ -41,6 +41,7 @@ func CreateWorkOrder(c *gin.Context) (err error) {
 			Tasks       json.RawMessage          `json:"tasks"`
 			Source      string                   `json:"source"`
 			IsExecTask  bool                     `json:"is_exec_task"`
+			OpenId      string                   `json:"openid"`
 		}
 		paramsValue struct {
 			Id       int           `json:"id"`
@@ -54,6 +55,14 @@ func CreateWorkOrder(c *gin.Context) (err error) {
 	if err != nil {
 		return
 	}
+
+	// 检查是否已授权
+	if workOrderValue.OpenId == "" {
+		return errors.New("请先进行微信授权")
+	}
+
+	// 设置创建人openid
+	workOrderValue.CreatorOpenId = workOrderValue.OpenId
 
 	relatedPerson, err := json.Marshal([]int{tools.GetUserId(c)})
 	if err != nil {
@@ -211,6 +220,7 @@ func CreateWorkOrder(c *gin.Context) (err error) {
 		State:         workOrderValue.State,
 		RelatedPerson: relatedPerson,
 		Creator:       tools.GetUserId(c),
+		CreatorOpenId: workOrderValue.OpenId,
 	}
 	err = tx.Create(&workOrderInfo).Error
 	if err != nil {

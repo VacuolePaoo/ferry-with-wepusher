@@ -16,6 +16,7 @@ import (
 	"github.com/jinzhu/gorm"
 
 	"github.com/gin-gonic/gin"
+	"github.com/spf13/viper"
 )
 
 /*
@@ -844,7 +845,6 @@ func (h *Handle) HandleWorkOrder(
 		sendSubject = "您的工单已处理完成"
 		sendDescription = "您的工单已处理完成，工单描述如下"
 		err = h.tx.Create(&process.CirculationHistory{
-			Model:       base.Model{},
 			Title:       h.workOrderDetails.Title,
 			WorkOrder:   h.workOrderDetails.Id,
 			State:       h.targetStateValue["label"].(string),
@@ -859,6 +859,31 @@ func (h *Handle) HandleWorkOrder(
 			h.tx.Rollback()
 			return
 		}
+
+		// 发送微信通知
+		if h.workOrderDetails.CreatorOpenId != "" {
+			wechatEnable := viper.GetBool("settings.wechat.enable")
+			if wechatEnable {
+				result := "通过"
+				if h.flowProperties == 0 {
+					result = "拒绝"
+				}
+				// 使用goroutine异步发送通知
+				go func() {
+					err := wechat.SendWorkOrderResult(
+						h.workOrderDetails.CreatorOpenId,
+						h.workOrderDetails.Title,
+						result,
+						remarks,
+						time.Now().Format("2006-01-02 15:04:05"),
+					)
+					if err != nil {
+						logger.Error("发送微信通知失败：", err)
+					}
+				}()
+			}
+		}
+
 		if len(noticeList) > 0 {
 			// 查询工单创建人信息
 			err = h.tx.Model(&system.SysUser{}).

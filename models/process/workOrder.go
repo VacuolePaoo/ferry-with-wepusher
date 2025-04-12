@@ -23,6 +23,7 @@ type WorkOrderInfo struct {
 	Creator       int             `gorm:"column:creator; type:int(11)" json:"creator" form:"creator"`                                 // 创建人
 	UrgeCount     int             `gorm:"column:urge_count; type:int(11); default:0" json:"urge_count" form:"urge_count"`             // 催办次数
 	UrgeLastTime  int             `gorm:"column:urge_last_time; type:int(11); default:0" json:"urge_last_time" form:"urge_last_time"` // 上一次催促时间
+	CreatorOpenId string          `gorm:"column:creator_openid; type:varchar(128)" json:"creator_openid" form:"creator_openid"`       // 创建人微信OpenID
 }
 
 func (WorkOrderInfo) TableName() string {

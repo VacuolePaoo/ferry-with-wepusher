@@ -6,6 +6,7 @@ import (
 	"ferry/router/dashboard"
 	"ferry/router/process"
 	systemRouter "ferry/router/system"
+	"ferry/router/wechat"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/gin-gonic/gin"
@@ -71,4 +72,11 @@ func sysCheckRoleRouterInit(r *gin.RouterGroup, authMiddleware *jwtauth.GinJWTMi
 	process.RegisterTaskRouter(v1, authMiddleware)
 	process.RegisterTplRouter(v1, authMiddleware)
 	process.RegisterWorkOrderRouter(v1, authMiddleware)
+
+	// 注册微信相关路由
+	wechatRouter := v1.Group("/wechat")
+	{
+		wechatRouter.GET("/auth", wechat.GetAuthUrl)     // 获取微信授权URL
+		wechatRouter.GET("/callback", wechat.Callback)   // 微信授权回调
+	}
 }

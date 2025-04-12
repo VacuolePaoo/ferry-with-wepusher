@@ -64,3 +64,9 @@ settings:
   ssl:
     key: keystring
     pem: temp/pem.pem
+  wechat:
+    enable: true
+    appid: "wx1234567890"
+    appsecret: "1234567890abcdef1234567890abcdef"
+    template_id: "ABC123DEF456GHI789"
+    redirect_uri: "http://your-domain.com/api/v1/wechat/callback"

@@ -56,8 +56,34 @@ func ProcessStructure(c *gin.Context) {
 
 // 新建工单
 func CreateWorkOrder(c *gin.Context) {
+	var (
+		workOrderValue struct {
+			process.WorkOrderInfo
+			Tpls        map[string][]interface{} `json:"tpls"`
+			SourceState string                   `json:"source_state"`
+			Tasks       json.RawMessage          `json:"tasks"`
+			Source      string                   `json:"source"`
+			IsExecTask  bool                     `json:"is_exec_task"`
+			OpenId      string                   `json:"openid"` // 添加openid字段
+		}
+	)
 
-	err := service.CreateWorkOrder(c)
+	err := c.ShouldBind(&workOrderValue)
+	if err != nil {
+		app.Error(c, -1, err, "")
+		return
+	}
+
+	// 检查是否已授权
+	if workOrderValue.OpenId == "" {
+		app.Error(c, -1, errors.New("请先进行微信授权"), "")
+		return
+	}
+
+	// 设置创建人openid
+	workOrderValue.CreatorOpenId = workOrderValue.OpenId
+
+	err = service.CreateWorkOrder(c)
 	if err != nil {
 		app.Error(c, -1, err, "")
 		return

@@ -1,61 +1,3 @@
-package notify
-
-import (
-	"bytes"
-	"ferry/models/system"
-	"ferry/pkg/logger"
-	"ferry/pkg/notify/dingtalk"
-	"ferry/pkg/notify/email"
-	"fmt"
-	"text/template"
-
-	"github.com/spf13/viper"
-)
-
-/*
-  @Author : lanyulei
-  @同时发送多种通知方式
-*/
-
-type BodyData struct {
-	SendTo        interface{} // 接受人
-	EmailCcTo     []string    // 抄送人邮箱列表
-	Subject       string      // 标题
-	Classify      []int       // 通知类型
-	Id            int         // 工单ID
-	Title         string      // 工单标题
-	Creator       string      // 工单创建人
-	Priority      int         // 工单优先级
-	PriorityValue string      // 工单优先级
-	CreatedAt     string      // 工单创建时间
-	Content       string      // 通知的内容
-	Description   string      // 表格上面的描述信息
-	ProcessId     int         // 流程ID
-	Domain        string      // 域名地址
-}
-
-func (b *BodyData) ParsingTemplate() (err error) {
-	// 读取模版数据
-	var (
-		buf bytes.Buffer
-	)
-
-	tmpl, err := template.ParseFiles("./static/template/email.html")
-	if err != nil {
-		return
-	}
-
-	b.Domain = viper.GetString("settings.domain.url")
-	err = tmpl.Execute(&buf, b)
-	if err != nil {
-		return
-	}
-
-	b.Content = buf.String()
-
-	return
-}
-
 func (b *BodyData) SendNotify() (err error) {
 	var (
 		emailList []string
@@ -90,6 +32,27 @@ func (b *BodyData) SendNotify() (err error) {
 				if dingtalkEnable {
 					url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
 					go dingtalk.SendDingMsg(phoneList, url, b.Title, b.Creator, b.PriorityValue, b.CreatedAt)
+				}
+			}
+		case 2: // 微信
+			wechatEnable := viper.GetBool("settings.wechat.enable")
+			if wechatEnable {
+				// 获取工单创建人openid
+				var workOrder process.WorkOrderInfo
+				err = orm.Eloquent.Model(&process.WorkOrderInfo{}).Where("id = ?", b.Id).Find(&workOrder).Error
+				if err != nil {
+					logger.Errorf("查询工单信息失败，%v", err.Error())
+					return
+				}
+				if workOrder.CreatorOpenId != "" {
+					url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
+					go wechat.SendWorkOrderResult(
+						workOrder.CreatorOpenId,
+						b.Title,
+						"通过",
+						b.Description,
+						b.CreatedAt,
+					)
 				}
 			}
 		}

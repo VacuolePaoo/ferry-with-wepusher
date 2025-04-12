@@ -170,6 +170,7 @@ CREATE TABLE `p_work_order_info` (
   `state` json DEFAULT NULL,
   `related_person` json DEFAULT NULL,
   `creator` int DEFAULT NULL,
+  `creator_openid` varchar(128) DEFAULT NULL COMMENT '创建人微信OpenID',
   `urge_count` int DEFAULT '0',
   `urge_last_time` int DEFAULT '0',
   PRIMARY KEY (`id`),
