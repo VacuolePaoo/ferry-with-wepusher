@@ -64,8 +64,3 @@ settings:
   ssl:
     key: keystring
     pem: temp/pem.pem
-  wechat:
-    enable: true
-    appid: "your_appid"
-    appsecret: "your_appsecret"
-    template_id: "your_template_id"

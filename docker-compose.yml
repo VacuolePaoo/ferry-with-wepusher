@@ -16,11 +16,6 @@ services:
     volumes:
       - './mysql/db:/var/lib/mysql'
       - '/etc/localtime:/etc/localtime:ro'
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   ferry_redis:
     container_name: ferry_redis
@@ -30,11 +25,6 @@ services:
     #ports:
     #  - 6379:6379
     command: redis-server --save 60 1 --loglevel warning
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
 
   ferry:
     build:
@@ -44,19 +34,13 @@ services:
     container_name: ferry
     restart: unless-stopped
     depends_on:
-      ferry_mysql:
-        condition: service_healthy
-      ferry_redis:
-        condition: service_healthy
+      - ferry_mysql
+      - ferry_redis
     ports:
       - "8002:8002"
     volumes:
       - '/etc/localtime:/etc/localtime:ro'
       - './config:/opt/workflow/ferry/config'
-      - './logs:/opt/workflow/ferry/logs'
-      - './static:/opt/workflow/ferry/static'
-    environment:
-      - TZ=Asia/Shanghai
     logging:
       driver: json-file
       options:

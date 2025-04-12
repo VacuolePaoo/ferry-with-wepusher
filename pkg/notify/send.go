@@ -6,7 +6,6 @@ import (
 	"ferry/pkg/logger"
 	"ferry/pkg/notify/dingtalk"
 	"ferry/pkg/notify/email"
-	"ferry/pkg/notify/wechat"
 	"fmt"
 	"text/template"
 
@@ -91,22 +90,6 @@ func (b *BodyData) SendNotify() (err error) {
 				if dingtalkEnable {
 					url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
 					go dingtalk.SendDingMsg(phoneList, url, b.Title, b.Creator, b.PriorityValue, b.CreatedAt)
-				}
-			}
-		case 2: // 微信服务号
-			// 获取工单信息
-			var workOrder work_order.WorkOrderInfo
-			err = models.DB.Model(&work_order.WorkOrderInfo{}).Where("id = ?", b.Id).First(&workOrder).Error
-			if err != nil {
-				logger.Errorf("获取工单信息失败，%v", err.Error())
-				return
-			}
-			
-			if workOrder.WechatOpenid != "" {
-				wechatEnable := viper.GetBool("settings.wechat.enable")
-				if wechatEnable {
-					url := fmt.Sprintf("%s/#/process/handle-ticket?workOrderId=%d&processId=%d", b.Domain, b.Id, b.ProcessId)
-					go wechat.SendWechatMsg(workOrder.WechatOpenid, url, b.Title, b.Creator, b.PriorityValue, b.CreatedAt)
 				}
 			}
 		}

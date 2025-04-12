@@ -71,10 +71,4 @@ func sysCheckRoleRouterInit(r *gin.RouterGroup, authMiddleware *jwtauth.GinJWTMi
 	process.RegisterTaskRouter(v1, authMiddleware)
 	process.RegisterTplRouter(v1, authMiddleware)
 	process.RegisterWorkOrderRouter(v1, authMiddleware)
-
-	// 微信相关接口
-	wechat := v1.Group("/wechat")
-	{
-		wechat.GET("/openid", apis.GetWechatOpenid)
-	}
 }
